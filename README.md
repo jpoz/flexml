@@ -77,7 +77,7 @@ func main() {
     partialXMLs := []string{
         `<key>Hello`,
         `<response><user id="123"`,
-        `<data>Value</data></response>`
+        `<data>Value</data></response>`,
     }
 
     // Process each fragment
