@@ -1,5 +1,9 @@
 # FlexML
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/jpoz/flexml.svg)](https://pkg.go.dev/github.com/jpoz/flexml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/jpoz/flexml)](https://goreportcard.com/report/github.com/jpoz/flexml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
 FleXML is a flexible XML parser for Go that can handle partial and invalid XML. It's designed to be more forgiving than traditional XML parsers while still providing a useful document structure for querying.
 
 ## Features
