@@ -429,5 +429,5 @@ The library intelligently handles problematic input by:
 The library includes comprehensive test coverage for both valid and invalid XML parsing:
 
 ```bash
-go test -v github.com/jpoz/flexml
+make test
 ```

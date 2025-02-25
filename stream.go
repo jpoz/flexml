@@ -595,4 +595,3 @@ func ParseReader(r io.Reader) (*StreamDocument, error) {
 
 	return doc, nil
 }
-
