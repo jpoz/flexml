@@ -505,3 +505,109 @@ func TestStreamString(t *testing.T) {
 		t.Error("String representation should contain </root>")
 	}
 }
+
+func TestStreamLLMReasoning(t *testing.T) {
+	// Sample LLM output with reasoning
+	xml := `<think>
+To solve this problem, I'll need to analyze what happens when we add two odd numbers.
+
+Let's represent odd numbers algebraically:
+- Any odd number can be written as 2k + 1, where k is some integer
+- So the first odd number is 2j + 1 (where j is an integer)
+- And the second odd number is 2m + 1 (where m is an integer)
+
+When we add them:
+(2j + 1) + (2m + 1) = 2j + 2m + 2 = 2(j + m + 1)
+
+Since j and m are integers, (j + m + 1) is also an integer.
+So the sum is 2 times an integer, which is always even.
+
+Therefore, the sum of two odd numbers is always even.
+</think>
+
+<answer>The sum of two odd numbers is always even.
+
+This is because each odd number can be written as 2k + 1 (one more than a multiple of 2). When we add two odd numbers:
+(2j + 1) + (2m + 1) = 2j + 2m + 2 = 2(j + m + 1)
+
+Since this equals 2 multiplied by an integer, the result must be even.</answer>`
+
+	// Test parsing with stream
+	reader := strings.NewReader(xml)
+	stream, err := ParseStream(reader)
+	if err != nil {
+		t.Fatalf("ParseStream error: %v", err)
+	}
+	
+	// Track what we've found
+	foundThinking := false
+	foundAnswer := false
+	var thinkContent string
+	var answerContent string
+	
+	// Process the stream
+	for stream.Next() {
+		event := stream.Event()
+		
+		if event.Type == StartElement {
+			if event.Name == "think" {
+				foundThinking = true
+			} else if event.Name == "answer" {
+				foundAnswer = true
+			}
+		} else if event.Type == Text {
+			if foundThinking && !foundAnswer {
+				thinkContent += event.Text
+			} else if foundAnswer {
+				answerContent += event.Text
+			}
+		}
+	}
+	
+	// Verify we found both parts
+	if !foundThinking {
+		t.Error("Did not find think element")
+	}
+	
+	if !foundAnswer {
+		t.Error("Did not find answer element")
+	}
+	
+	// Check content
+	if !strings.Contains(thinkContent, "To solve this problem") {
+		t.Error("Think content incomplete")
+	}
+	
+	if !strings.Contains(answerContent, "The sum of two odd numbers is always even") {
+		t.Error("Answer content incomplete")
+	}
+	
+	// Test with the regular parser which handles this case better
+	doc, err := Parse(xml)
+	if err != nil {
+		t.Fatalf("Parse error: %v", err)
+	}
+	
+	// Check that we can find the nodes
+	thinkNodes, ok := doc.DeepFind("think")
+	if !ok || len(thinkNodes) != 1 {
+		t.Fatal("Failed to find think element")
+	}
+	
+	answerNodes, ok := doc.DeepFind("answer")
+	if !ok || len(answerNodes) != 1 {
+		t.Fatal("Failed to find answer element")
+	}
+	
+	// Check content
+	thinkText := thinkNodes[0].GetText()
+	answerText := answerNodes[0].GetText()
+	
+	if !strings.Contains(thinkText, "Therefore, the sum of two odd numbers is always even") {
+		t.Errorf("Think text incomplete: %s", thinkText)
+	}
+	
+	if !strings.Contains(answerText, "Since this equals 2 multiplied by an integer") {
+		t.Errorf("Answer text incomplete: %s", answerText)
+	}
+}
