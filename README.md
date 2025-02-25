@@ -1,119 +1,118 @@
-# FlexML
+# FleXML: A Flexible XML Parser for Go
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/jpoz/flexml.svg)](https://pkg.go.dev/github.com/jpoz/flexml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/jpoz/flexml)](https://goreportcard.com/report/github.com/jpoz/flexml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-FleXML is a flexible XML parser for Go that can handle partial and invalid XML. It's designed to be more forgiving than traditional XML parsers while still providing a useful document structure for querying.
+FleXML parses incomplete or invalid XML data. Unlike standard XML parsers that require valid, complete XML input, FleXML gracefully handles partial XML fragments and malformed documents, extracting as much structured data as possible.
 
-## Features
+## 🌟 Features
 
-- Parse partial XML (unclosed tags)
-- Parse invalid XML (text mixed with elements)
-- Handle malformed or unquoted attributes
-- Support for XML comments and processing instructions
-- Efficient single-pass parsing algorithm
-- Simple API for querying the document
+- **Partial XML Parsing**: Extract data from incomplete XML fragments
+  - `<key>Hello` → Element with text "Hello"
+  - `<response><message>` → Nested element structure
 
-## Installation
+- **Invalid XML Handling**: Process XML with mixed content and other issues
+  - Handles text mixed with elements
+  - Supports malformed or unquoted attributes
+
+- **Flexible Document Querying**: Navigate and extract data easily
+  - Find elements by name anywhere in the document
+  - Extract text content and attribute values
+
+- **Resilient Parsing**: Recovers gracefully from unexpected input
+  - No panic on malformed input
+  - Extracts maximum valid data even from corrupted XML
+
+- **Zero Dependencies**: Pure Go implementation with no external dependencies
+
+## 📦 Installation
 
 ```bash
 go get github.com/jpoz/flexml
 ```
 
-## Usage
+## 🚀 Quick Start
+
+### Parsing Valid XML
 
 ```go
-import "github.com/jpoz/flexml"
+package main
 
-// Parse an XML string
-doc, err := flexml.Parse("<response><message>Greetings</message></response>")
-if err != nil {
-    // Handle error (note: even with errors, a partial document may be returned)
-}
+import (
+    "fmt"
+    "github.com/jpoz/flexml"
+)
 
-// Find elements by name using DeepFind
-nodes, ok := doc.DeepFind("message")
-if ok {
-    fmt.Println("Found", len(nodes), "message elements")
-    fmt.Println("Text content:", nodes[0].GetText())
-}
-
-// Find a single element
-node, ok := doc.FindOne("message")
-if ok {
-    fmt.Println("First message:", node.GetText())
-}
-
-// Access attributes
-attrValue, ok := node.GetAttribute("id")
-if ok {
-    fmt.Println("Attribute value:", attrValue)
-}
-
-// Get string representation of the document
-fmt.Println(doc.String())
-```
-
-## Examples
-
-### Parsing valid XML
-
-```go
-docStr := `<response><message>Greetings</message></response>`
-doc, err := flexml.Parse(docStr)
-if err != nil {
-    log.Fatalf("Error parsing XML: %v", err)
-}
-
-nodes, ok := doc.DeepFind("message")
-if ok {
-    fmt.Println("Found message:", nodes[0].GetText())
+func main() {
+    // Parse complete XML
+    xmlStr := `<response><message>Greetings</message></response>`
+    
+    doc, err := flexml.Parse(xmlStr)
+    if err != nil {
+        fmt.Printf("Error: %v\n", err)
+        return
+    }
+    
+    nodes, ok := doc.DeepFind("message")
+    if ok {
+        fmt.Printf("Message content: %s\n", nodes[0].GetText())
+        // Output: Message content: Greetings
+    }
 }
 ```
 
-### Parsing partial XML (unclosed tag)
+### Handling Partial XML
 
 ```go
-partialXML := `<key>Hello`
-doc, err := flexml.Parse(partialXML)
-if err != nil {
-    log.Fatalf("Error parsing partial XML: %v", err)
-}
+package main
 
-nodes, ok := doc.DeepFind("key")
-if ok {
-    fmt.Println("Found key:", nodes[0].GetText())
+import (
+    "fmt"
+    "github.com/jpoz/flexml"
+)
+
+func main() {
+    // Example partial XML fragments
+    partialXMLs := []string{
+        `<key>Hello`,
+        `<response><user id="123"`,
+        `<data>Value</data></response>`
+    }
+
+    // Process each fragment
+    for _, xml := range partialXMLs {
+        fmt.Printf("Processing: %s\n", xml)
+        
+        doc, err := flexml.Parse(xml)
+        if err != nil {
+            fmt.Printf("Notice (parsing continues): %v\n", err)
+        }
+
+        // Even with errors, we can still extract data
+        fmt.Printf("Document structure: %s\n", doc.String())
+    }
 }
 ```
 
-### Parsing invalid XML (text mixed with elements)
+## ⚙️ How It Works
 
-```go
-invalidXML := `Hello how are you
-<name>James</name>`
-doc, err := flexml.Parse(invalidXML)
-if err != nil {
-    log.Fatalf("Error parsing invalid XML: %v", err)
-}
+FleXML uses a custom parsing algorithm designed to be forgiving while still providing a useful document structure:
 
-// Access text content
-if len(doc.Root.Children) > 0 && doc.Root.Children[0].Type == flexml.TextNode {
-    fmt.Println("Text content:", doc.Root.Children[0].Value)
-}
+1. **Single-Pass Parser**: Processes the input in a single pass for efficiency
+2. **Node Hierarchy**: Builds a tree of nodes (elements, text, comments)
+3. **Automatic Recovery**: Detects and handles common XML errors
 
-// Find the name element
-nodes, ok := doc.DeepFind("name")
-if ok {
-    fmt.Println("Found name:", nodes[0].GetText())
-}
-```
+The library intelligently handles problematic input by:
+- Treating unclosed tags as valid elements
+- Supporting text outside of elements
+- Processing malformed attributes
 
-## API Reference
+## 🔍 API Reference
 
 ### Document
 
-- `Parse(xml string) (*Document, error)` - Parses an XML string and returns a Document
+- `Parse(xml string) (*Document, error)` - Parses an XML string into a Document
 - `DeepFind(name string) ([]*Node, bool)` - Searches for nodes with the given name recursively
 - `FindOne(name string) (*Node, bool)` - Finds the first node with the given name
 - `String() string` - Returns a string representation of the document
@@ -121,19 +120,13 @@ if ok {
 ### Node
 
 - `GetAttribute(name string) (string, bool)` - Returns the value of an attribute
-- `GetText() string` - Returns the text content of a node (concatenating all text child nodes)
+- `GetText() string` - Returns the text content of a node
+- `Type` - The type of node (ElementNode, TextNode, CommentNode, ProcessingInstructionNode)
 
-### Node Types
+## 🧪 Testing
 
-- `ElementNode` - An XML element node
-- `TextNode` - A text node
-- `CommentNode` - An XML comment node
-- `ProcessingInstructionNode` - An XML processing instruction node
+The library includes comprehensive test coverage for both valid and invalid XML parsing:
 
-## Performance Considerations
-
-FlexML uses a single-pass parsing algorithm that is generally efficient for most XML documents. However, for extremely large documents, you may want to consider streaming parsers. FlexML's flexibility comes with a slight performance cost compared to strict parsers, but the difference is negligible for most use cases.
-
-## License
-
-MIT License
+```bash
+go test -v github.com/jpoz/flexml
+```
