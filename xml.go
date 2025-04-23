@@ -30,6 +30,24 @@ type Node struct {
 	Parent   *Node
 }
 
+func (n *Node) FindOne(name string) (*Node, bool) {
+	var result []*Node
+	deepFindRecursive(n, name, &result)
+	if len(result) > 0 {
+		return result[0], true
+	}
+	return nil, false
+}
+
+func (n *Node) FindDeep(name string) ([]*Node, bool) {
+	var result []*Node
+	deepFindRecursive(n, name, &result)
+	if len(result) > 0 {
+		return result, true
+	}
+	return nil, false
+}
+
 // Document represents an XML document
 type Document struct {
 	Root *Node
