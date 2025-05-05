@@ -48,6 +48,12 @@ func (n *Node) FindDeep(name string) ([]*Node, bool) {
 	return nil, false
 }
 
+func (n *Node) String() string {
+	var sb strings.Builder
+	printNode(&sb, n, 0)
+	return sb.String()
+}
+
 // Document represents an XML document
 type Document struct {
 	Root *Node
